@@ -1,1 +1,3 @@
-tar: .
+tar: @version@:.
+spec: .gear/rvm.spec
+copy?: .gear/*.patch

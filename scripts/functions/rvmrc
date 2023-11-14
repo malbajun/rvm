@@ -29,6 +29,10 @@ __rvm_rvmrc_tools()
     rvmrc_ruby="${1:-${GEM_HOME##*/}}"
     rvmrc_path="$(__rvm_cd "$PWD" >/dev/null 2>&1; pwd)/${2:-.rvmrc}"
   elif
+    [[ -f "$PWD/include/ruby.h" ]]
+  then
+    rvmrc_path="$PWD/include/ruby.h"
+  elif
     [[ "$1" == ".rvmrc" ]]
   then
     rvmrc_path="$PWD/.rvmrc"
@@ -142,6 +146,21 @@ __rvm_rvmrc_tools_try_to_read_ruby()
       else return 1
       fi
       ;;
+
+    (*/include/ruby.h)
+      [[ -d  "$rvm_token" ]] || __rvm_project_dir_check "$rvm_token"
+      rvm_action="${rvm_action:-install}"
+      rvm_remote_flag=0
+      rvm_local_install=1
+      major=$(cat ./include/ruby/version.h|grep " RUBY_API_VERSION_MAJOR " |sed "s/.*RUBY_API_VERSION_MAJOR //")
+      minor=$(cat ./include/ruby/version.h|grep " RUBY_API_VERSION_MINOR " |sed "s/.*RUBY_API_VERSION_MINOR //")
+      teeny=$(cat ./version.h|grep " RUBY_VERSION_TEENY " |sed "s/.*RUBY_VERSION_TEENY //")
+      rvm_ruby_string="ruby-${major}.${minor}.${teeny}"
+      rvm_ruby_strings="${rvm_ruby_string}"
+      rvm_local_src_path="$PWD"
+      version_default="ignore"
+      ;;
+
     (*)
       __rvm_rvmrc_tools_read_ruby "$@" || return $?
       ;;

@@ -1,0 +1,442 @@
+--- scripts/cli
++++ scripts/cli
+@@ -660,6 +660,14 @@ __rvm_parse_args()
+             export "rvm_${rvm_token}_flag"=1
+             ;;
+ 
++          --*-path=*)
++            rvm_token=${rvm_token#--}
++            rvm_token=${rvm_token//-/_}
++            rvm_value=${rvm_token//*=/}
++            rvm_token=${rvm_token//=*/}
++	    export rvm_${rvm_token}=$rvm_value
++            ;;
++
+           --no-docs)
+             rvm_token=${rvm_token#--no-}
+             rvm_token=${rvm_token//-/_}
+@@ -767,7 +775,7 @@ __rvm_parse_args()
+             rvm_disable_binary_flag=1
+             ;;
+ 
+-          --with-*|--without-*|--enable-*|--disable-*)
++          --with-*|--without-*|--enable-*|--disable-*|--*dir=*)
+             rvm_configure_flags+=( "$rvm_token" )
+             rvm_disable_binary_flag=1
+             ;;
+--- bin/rvm
++++ bin/rvm
+@@ -35,7 +35,9 @@ fi
+ export rvm_path
+ if [[ -z "${rvm_path:-}" ]]
+ then
+-  if [[ -d "${0%/bin/rvm}" ]]
++  if [[ -L "${0}" ]]
++  then rvm_pre="$(readlink -s "$0")"; rvm_path="$( \cd "${rvm_pre%/bin/rvm}">/dev/null; pwd )"
++  elif [[ -d "${0%/bin/rvm}" ]]
+   then rvm_path="$( \cd "${0%/bin/rvm}">/dev/null; pwd )"
+   elif (( UID == 0 )) && [[ -d "/usr/local/rvm" ]]
+   then rvm_path="/usr/local/rvm"
+--- scripts/initialize	2023-09-16 01:06:52.510000000 +0300
++++ scripts/initialize	2023-09-16 01:54:54.883000000 +0300
+@@ -88,6 +88,8 @@ Error:
+     then
+       rvm_path="${BASH_SOURCE:-$_}"
+       rvm_path="$( \command \cd "${rvm_path%/scripts/initialize}">/dev/null; pwd )"
++    elif [[ -d "/usr/lib/rvm" ]]
++    then rvm_path="/usr/lib/rvm"
+     elif (( UID == 0 )) && [[ -d "/usr/local/rvm" ]]
+     then rvm_path="/usr/local/rvm"
+     elif [[ -d "${HOME}/.rvm" ]]
+@@ -98,6 +100,27 @@ Error:
+     fi
+   fi
+ 
++  if [[ -z "${rvm_usr_prefix:-}" ]]
++  then
++    if [[ -d "/usr/lib/rvm" ]]
++    then
++      rvm_usr_prefix="/usr"
++    else
++      rvm_usr_prefix=${rvm_usr_prefix:-"$rvm_path"}
++    fi
++  fi
++
++  export rvm_local_state_path
++  if [[ -z "${rvm_local_state_path:-}" ]]
++  then
++    if [[ -d "/usr/lib/rvm" ]]
++    then
++      rvm_local_state_path="/var/lib/rvm"
++    else
++      rvm_local_state_path=${rvm_local_state_path:-"$rvm_path"}
++    fi
++  fi
++
+   true ${rvm_scripts_path:="$rvm_path/scripts"}
+ 
+   #
+@@ -115,31 +138,31 @@ Error:
+   export rvm_user_install_flag
+ 
+   : \
+-    rvm_bin_path:${rvm_bin_path:="$rvm_path/bin"} \
+-    rvm_man_path:${rvm_man_path:="$rvm_path/share/man"} \
+-    rvm_archives_path:${rvm_archives_path:="$rvm_path/archives"} \
++    rvm_bin_path:${rvm_bin_path:="$rvm_usr_path/bin"} \
++    rvm_man_path:${rvm_man_path:="$rvm_usr_path/share/man"} \
++    rvm_archives_path:${rvm_archives_path:="$rvm_local_state_path/archives"} \
+     rvm_docs_path:${rvm_docs_path:="$rvm_path/docs"} \
+-    rvm_environments_path:${rvm_environments_path:="$rvm_path/environments"} \
++    rvm_environments_path:${rvm_environments_path:="$rvm_local_state_path/environments"} \
+     rvm_examples_path:${rvm_examples_path:="$rvm_path/examples"} \
+-    rvm_gems_path:${rvm_gems_path:="$rvm_path/gems"} \
++    rvm_gems_path:${rvm_gems_path:="$rvm_local_state_path/gems"} \
+     rvm_gemsets_path:${rvm_gemsets_path:="$rvm_path/gemsets"} \
+     rvm_help_path:${rvm_help_path:="$rvm_path/help"} \
+     rvm_docs_path:${rvm_docs_path:="$rvm_path/docs"} \
+     rvm_hooks_path:${rvm_hooks_path:="$rvm_path/hooks"} \
+     rvm_lib_path:${rvm_lib_path:="$rvm_path/lib"} \
+-    rvm_log_path:${rvm_log_path:="$rvm_path/log"} \
++    rvm_log_path:${rvm_log_path:="$rvm_local_state_path/log"} \
+     rvm_patches_path:${rvm_patches_path:="$rvm_path/patches"} \
+     rvm_repos_path:${rvm_repos_path:="$rvm_path/repos"} \
+-    rvm_rubies_path:${rvm_rubies_path:="$rvm_path/rubies"} \
++    rvm_rubies_path:${rvm_rubies_path:="$rvm_local_state_path/rubies"} \
+     rvm_rubygems_path:${rvm_rubygems_path:="$rvm_path/rubygems"} \
+-    rvm_src_path:${rvm_src_path:="$rvm_path/src"} \
+-    rvm_tmp_path:${rvm_tmp_path:="$rvm_path/tmp"} \
+-    rvm_user_path:${rvm_user_path:="$rvm_path/user"} \
++    rvm_src_path:${rvm_src_path:="$rvm_local_state_path/src"} \
++    rvm_tmp_path:${rvm_tmp_path:="$rvm_local_state_path/tmp"} \
++    rvm_user_path:${rvm_user_path:="$rvm_local_state_path/user"} \
+     rvm_usr_path:${rvm_usr_path:="$rvm_path/usr"} \
+-    rvm_wrappers_path:${rvm_wrappers_path:="$rvm_path/wrappers"} \
++    rvm_wrappers_path:${rvm_wrappers_path:="$rvm_local_state_path/wrappers"} \
+     rvm_verbose_flag:${rvm_verbose_flag:=0} \
+     rvm_debug_flag:${rvm_debug_flag:=0} \
+-    rvm_gems_cache_path:${rvm_gems_cache_path:=${rvm_gems_path:-"$rvm_path/gems"}/cache}
++    rvm_gems_cache_path:${rvm_gems_cache_path:=${rvm_gems_path:-"$rvm_local_state_path/gems"}/cache}
+ 
+   export rvm_action rvm_alias_expanded rvm_archive_extension rvm_archives_path rvm_bin_flag rvm_bin_path rvm_debug_flag rvm_default_flag rvm_delete_flag rvm_docs_path rvm_docs_type rvm_dump_environment_flag rvm_environments_path rvm_error_message rvm_examples_path rvm_expanding_aliases rvm_file_name rvm_gemdir_flag rvm_gems_cache_path rvm_gems_path rvm_gemset_name rvm_gemset_separator rvm_gemsets_path rvm_gemstone_package_file rvm_gemstone_url rvm_head_flag rvm_help_path rvm_docs_path rvm_hook rvm_hooks_path rvm_install_on_use_flag rvm_lib_path rvm_llvm_flag rvm_loaded_flag rvm_log_path rvm_niceness rvm_nightly_flag rvm_only_path_flag rvm_parse_break rvm_patch_original_pwd rvm_patches_path rvm_path rvm_pretty_print_flag rvm_proxy rvm_quiet_flag rvm_reload_flag rvm_remove_flag rvm_repos_path rvm_rubies_path rvm_ruby_alias rvm_ruby_args rvm_ruby_binary rvm_ruby_bits rvm_ruby_configure rvm_ruby_file rvm_ruby_gem_home rvm_ruby_gem_path rvm_ruby_global_gems_path rvm_ruby_home rvm_ruby_interpreter rvm_ruby_irbrc rvm_ruby_major_version rvm_ruby_make rvm_ruby_make_install rvm_ruby_minor_version rvm_ruby_mode rvm_ruby_name rvm_ruby_package_file rvm_ruby_package_name rvm_ruby_patch rvm_ruby_patch_level rvm_ruby_release_version rvm_ruby_repo_url rvm_ruby_revision rvm_ruby_selected_flag rvm_ruby_sha rvm_ruby_string rvm_ruby_strings rvm_ruby_tag rvm_ruby_url rvm_ruby_user_tag rvm_ruby_version rvm_script_name rvm_scripts_path rvm_sdk rvm_user_install_flag rvm_silent_flag rvm_src_path rvm_sticky_flag rvm_system_flag rvm_tmp_path rvm_token rvm_trace_flag rvm_use_flag rvm_user_flag rvm_user_path rvm_usr_path rvm_verbose_flag rvm_wrappers_path rvm_ruby_repo_branch rvm_man_path rvm_remote_flag rvm_ruby_repo_tag
+ 
+--- scripts/functions/detect/system
++++ scripts/functions/detect/system
+@@ -31,8 +31,9 @@ __rvm_detect_system()
+       elif
+         [[ -f /etc/altlinux-release ]]
+       then
+-        _system_name="Arch"
+-        _system_version="libc-$(ldd --version  | \command \awk 'NR==1 {print $NF}' | \command \awk -F. '{print $1"."$2}' | head -n 1)"
++        _system_name="ALT"
++        _system_version="$(GREP_OPTIONS="" \command \grep -Eo '[0-9.]+' /etc/fedora-release | head -n 1)"
++	_system_arch="$(uname -a|sed 's/ /\n/g' |tail -n-2 | head -1)"
+       elif
+         [[ -f /etc/SuSE-release ]]
+       then
+--- scripts/functions/manage/base_install
++++ scripts/functions/manage/base_install
+@@ -18,19 +18,29 @@ __rvm_install_source()
+   rvm_log "Installing Ruby from source to: $rvm_ruby_home, this may take a while depending on your cpu(s)..."
+   __rvm_cd "${rvm_src_path}"
+ 
+-  __rvm_fetch_ruby ||
+-  {
+-    result=$?
+-    rvm_error "There has been an error fetching the ruby interpreter. Halting the installation."
+-    return $result
+-  }
++  if [[ -z "$rvm_local_src_path" ]]
++  then
++    __rvm_fetch_ruby ||
++    {
++      result=$?
++      rvm_error "There has been an error fetching the ruby interpreter. Halting the installation."
++      return $result
++    }
+ 
+-  __rvm_cd "${rvm_src_path}/$rvm_ruby_string" ||
+-  {
+-    result=$?
+-    rvm_error "Source directory is missing.  \nDid the download or extraction fail?  \nHalting the installation."
+-    return $result
+-  }
++    __rvm_cd "${rvm_src_path}/$rvm_ruby_string" ||
++    {
++      result=$?
++      rvm_error "Source directory is missing.  \nDid the download or extraction fail?  \nHalting the installation."
++      return $result
++    }
++  else
++    __rvm_cd "${rvm_local_src_path}" ||
++    {
++      result=$?
++      rvm_error "Specified source directory is missing.  \nPlease specify a valid folder.  \nHalting the installation."
++      return $result
++    }
++  fi
+ 
+   if
+     [[ -d "${rvm_path}/usr" ]]
+@@ -57,6 +57,25 @@ __rvm_install_source()
+   }
+ 
+   if
++    [[ -d "$rvm_local_src_path" ]]
++  then
++    rvm_source_dir=$rvm_local_src_path
++  else
++    rvm_source_dir="${rvm_src_path}/$rvm_ruby_string/autogen.sh"
++  fi
++
++  if
++    [[ -s "$rvm_source_dir/autogen.sh" ]]
++  then
++    __rvm_log_command "autogen.sh" "$rvm_ruby_string - #autogen.sh" "$rvm_source_dir/autogen.sh" ||
++    {
++      result=$?
++      rvm_error "There has been an error while running autogen.sh. Halting the installation."
++      return $result
++    }
++  fi
++
++  if
+     (( ${rvm_force_autoconf_flag:-0} == 1 )) || {
+       [[ -z "${rvm_ruby_configure:-}" ]] &&
+       [[ ! -s "${rvm_src_path}/$rvm_ruby_string/configure" ||
+@@ -165,7 +175,12 @@ __rvm_install_source()
+       ;;
+   esac
+ 
+-  __rvm_initial_gemsets_create "$rvm_ruby_home/bin/ruby" &&
++  if [[ -z "$rvm_local_src_path" ]]
++  then
++    __rvm_initial_gemsets_create "$rvm_ruby_home/bin/ruby"
++  else
++    true
++  fi &&
+   __rvm_post_install &&
+   __rvm_fetch_ruby_cleanup ||
+   return $?
+@@ -421,9 +436,12 @@ https://rvm.io/rubies/named/
+   then __rvm_remove_src_and_ruby
+   fi
+ 
+-  if __rvm_install_ruby_try_remote
+-  then return 0
+-  else (( $? == 2 )) || return 1 # 2 => continue with compilation
++  if [[ -z "$rvm_local_src_path" ]]
++  then
++    if __rvm_install_ruby_try_remote
++    then return 0
++    else (( $? == 2 )) || return 1 # 2 => continue with compilation
++    fi
+   fi
+ 
+   __rvm_check_available_space "${rvm_ruby_string}" sources || return $?
+--- scripts/functions/rvmrc
++++ scripts/functions/rvmrc
+@@ -29,6 +28,10 @@ __rvm_rvmrc_tools()
+   then
+     rvmrc_ruby="${1:-${GEM_HOME##*/}}"
+     rvmrc_path="$(__rvm_cd "$PWD" >/dev/null 2>&1; pwd)/${2:-.rvmrc}"
++  elif
++    [[ -f "$PWD/include/ruby.h" ]]
++  then
++    rvmrc_path="$PWD/include/ruby.h"
+   elif
+     [[ "$1" == ".rvmrc" ]]
+   then
+@@ -142,6 +146,22 @@ __rvm_rvmrc_tools_try_to_read_ruby()
+       else return 1
+       fi
+       ;;
++
++    (*/include/ruby.h)
++      [[ -d  "$rvm_token" ]] || __rvm_project_dir_check "$rvm_token"
++      rvm_action="${rvm_action:-install}"
++      rvm_remote_flag=0
++      rvm_local_install=1
++      rvm_docs_flag=1
++      major=$(cat ./include/ruby/version.h|grep " RUBY_API_VERSION_MAJOR " |sed "s/.*RUBY_API_VERSION_MAJOR //")
++      minor=$(cat ./include/ruby/version.h|grep " RUBY_API_VERSION_MINOR " |sed "s/.*RUBY_API_VERSION_MINOR //")
++      teeny=$(cat ./version.h|grep " RUBY_VERSION_TEENY " |sed "s/.*RUBY_VERSION_TEENY //")
++      rvm_ruby_string="ruby-${major}.${minor}.${teeny}"
++      rvm_ruby_strings="${rvm_ruby_string}"
++      rvm_local_src_path="$PWD"
++      version_default="ignore"
++      ;;
++
+     (*)
+       __rvm_rvmrc_tools_read_ruby "$@" || return $?
+       ;;
+--- /dev/null
++++ scripts/functions/requirements/alt
+@@ -0,0 +1,167 @@
++#!/usr/bin/env bash
++
++__rvm_sudo()
++{
++  if
++    [[ "$1" == "-p" ]]
++  then
++    rvm_printf_to_stderr "${2//%p/[root]/}"
++    shift 2
++  fi
++  ssh root@localhost -o PasswordAuthentication=false -o "RemoteCommand=$*" 2>/dev/null || sudo $* || su -c "$*" 2>/dev/null || true
++}
++
++requirements_alt_lib_installed() {
++  rpm -q "$1" >/dev/null 2>&1 || return $?
++}
++
++requirements_alt_lib_available()
++{
++  apt-cache search "^${1}$" >/dev/null 2>&1 || return $?
++}
++
++requirements_alt_libs_install()
++{
++  __rvm_try_sudo apt-get install -y "$@" || return $?
++}
++
++requirements_alt_libs_remove()
++{
++  __rvm_try_sudo apt-get remove -y "$@" || return $?
++}
++
++requirements_alt_update_system()
++{
++  # Has to be ran separately so new version can be used for installing missing libs
++  requirements_alt_libs_install apt rpm &&
++  case "$1" in
++    (ruby*)
++      requirements_alt_libs_install ruby
++      ;;
++  esac || return $?
++}
++
++requirements_alt_define_check_raspberry_pi()
++{
++  if
++    [[ "${_system_arch}" == "arm"* ]]
++  then
++    # assuming all arm will need this fix
++    requirements_check_fallback ntp openntpd chrony
++  fi
++}
++
++requirements_alt_define_openssl()
++{
++  requirements_check openssl
++}
++
++requirements_alt_define()
++{
++  requirements_alt_define_check_raspberry_pi
++
++  case "$1" in
++    (rvm)
++      requirements_check bash curl patch
++      ;;
++    (jruby*)
++      requirements_check curl make
++
++      if
++        is_head_or_disable_binary "$1"
++      then
++        requirements_check_fallback java-11-openjdk
++        requirements_check git
++        case $( jruby_installation_method  "$1" ) in
++          ant) __rvm_which ant >/dev/null || requirements_check apache-ant ;;
++          mvn) __rvm_which mvn >/dev/null || requirements_check maven      ;;
++        esac
++      else
++        requirements_check_fallback java-11-openjdk
++      fi
++      ;;
++    (ir*)
++      requirements_check mono-core
++      ;;
++    (opal)
++      requirements_check node npm
++      ;;
++    (rbx*head|rubinius*head)
++      undesired_check clang llvm llvm-common llvm-rocm
++      requirements_check clang llvm llvm-common llvm-rocm patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison git
++      ;;
++    (rbx-3*|rubinius-3*)
++      undesired_check clang llvm llvm-common llvm-rocm
++      requirements_check clang llvm llvm-common llvm-rocm patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison
++      ;;
++    (rbx-2*|rubinius-2*)
++      undesired_check clang llvm llvm-common llvm-rocm
++      requirements_check clang llvm llvm-common llvm-rocm patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison
++      ;;
++    (rbx-1*|rubinius-1*)
++      undesired_check clang llvm llvm-common llvm-rocm
++      requirements_check clang llvm llvm-common llvm-rocm patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison
++      ;;
++    (truffleruby*)
++      requirements_check zlib make gcc libxml2-devel
++      requirements_alt_define_openssl "$1"
++      ;;
++    (ruby-2.3*|ruby-2.2*|ruby-2.1*|ruby-2.0*|ruby-1.9*)
++      requirements_check gcc patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison sqlite git
++      requirements_alt_define_openssl "$1"
++      ;;
++    (*-head)
++      requirements_check gcc patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison sqlite git
++      requirements_alt_define_openssl "$1"
++      ;;
++    (*)
++      requirements_check gcc patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison sqlite
++      requirements_alt_define_openssl "$1"
++      ;;
++  esac
++}
++
++requirements_alt_service()
++{
++  systemctl $1 $3 >/dev/null ||
++  if __rvm_try_sudo systemctl $2 $3
++  then true
++  else
++    \typeset __alt_status=$?
++    rvm_error "There was a problem running 'systemctl $2 $3' with exit status '$__alt_status'."
++    return $__alt_status
++  fi
++}
++
++requirements_alt_after_check_raspberry_pi()
++{
++  if
++    [[ "${_system_arch}" == "arm"* ]]
++  then
++    ntp_servers=( ntpd systemd-timesyncd openntpd )
++    for ntp_server in "${ntp_servers[@]}"
++    do
++      if
++        systemctl list-unit-files | grep -Fq "$ntp_server.service" &&
++        systemctl is-active $ntp_server
++      then
++        return 0
++      fi
++    done
++    for ntp_server in "${ntp_servers[@]}"
++    do
++      if
++        systemctl list-unit-files | grep -Fq "$ntp_server.service"
++      then
++        requirements_alt_service is-enabled enable $ntp_server &&
++        requirements_alt_service is-active  start  $ntp_server ||
++        return $?
++      fi
++    done
++  fi
++}
++
++requirements_alt_after()
++{
++  requirements_alt_after_check_raspberry_pi
++}
