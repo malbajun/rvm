@@ -101,8 +101,7 @@
 +    rvm_log_path:${rvm_log_path:="$rvm_local_state_path/log"} \
      rvm_patches_path:${rvm_patches_path:="$rvm_path/patches"} \
      rvm_repos_path:${rvm_repos_path:="$rvm_path/repos"} \
--    rvm_rubies_path:${rvm_rubies_path:="$rvm_path/rubies"} \
-+    rvm_rubies_path:${rvm_rubies_path:="$rvm_local_state_path/rubies"} \
+     rvm_rubies_path:${rvm_rubies_path:="$rvm_path/rubies"} \
      rvm_rubygems_path:${rvm_rubygems_path:="$rvm_path/rubygems"} \
 -    rvm_src_path:${rvm_src_path:="$rvm_path/src"} \
 -    rvm_tmp_path:${rvm_tmp_path:="$rvm_path/tmp"} \
@@ -129,7 +128,7 @@
 -        _system_name="Arch"
 -        _system_version="libc-$(ldd --version  | \command \awk 'NR==1 {print $NF}' | \command \awk -F. '{print $1"."$2}' | head -n 1)"
 +        _system_name="ALT"
-+        _system_version="$(GREP_OPTIONS="" \command \grep -Eo '[0-9.]+' /etc/fedora-release | head -n 1)"
++        _system_version="$(GREP_OPTIONS="" \command \grep -Eo '[0-9.]+' /etc/altlinux-release | head -n 1)"
 +	_system_arch="$(uname -a|sed 's/ /\n/g' |tail -n-2 | head -1)"
        elif
          [[ -f /etc/SuSE-release ]]
@@ -272,10 +271,32 @@
        ;;
 --- /dev/null
 +++ scripts/functions/requirements/alt
-@@ -0,0 +1,167 @@
+
+@@ -0,0 +1,188 @@
 +#!/usr/bin/env bash
 +
-+__rvm_sudo()
++requirements_find_alt()
++{
++  if # find macports in PATH
++    __rvm_which port >/dev/null 2>&1
++  then
++    return 0
++  else # find apt-get in and out of PATH and link to rvm/bin
++    \typeset __binary
++    for __binary in /usr/bin/apt-get /usr/local/bin/apt-get
++    do
++      if
++        [[ -f "${__binary}" && -s "${__binary}" && -x "${__binary}" ]]
++      then
++        PATH="$PATH:${__binary%/*}"
++        return 0
++      fi
++    done
++    return 1
++  fi
++}
++
++__rvm_try_sudo()
 +{
 +  if
 +    [[ "$1" == "-p" ]]
