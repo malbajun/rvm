@@ -14,8 +14,8 @@
 [ruby-]2.7[.8]
 [ruby-]3.0[.6]
 [ruby-]3.1[.4]
-[ruby-]3[.2.2]
-[ruby-]3.3[.0-preview1]
+[ruby-]3.2[.2]
+[ruby-]3[.3.0]
 ruby-head
 
 # for forks use: rvm install ruby-head-<name> --url https://github.com/github/ruby.git --branch 2.2
@@ -25,8 +25,8 @@ jruby-1.6[.8]
 jruby-1.7[.27]
 jruby-9.1[.17.0]
 jruby-9.2[.21.0]
-jruby-9.3[.10.0]
-jruby[-9.4.3.0]
+jruby-9.3[.13.0]
+jruby[-9.4.5.0]
 jruby-head
 
 # Rubinius
@@ -40,7 +40,7 @@ rbx-5[.0]
 rbx-head
 
 # TruffleRuby
-truffleruby[-23.0.0]
+truffleruby[-23.1.2]
 
 # Opal
 opal

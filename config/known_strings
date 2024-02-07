@@ -157,10 +157,14 @@ jruby-9.3.7.0
 jruby-9.3.8.0
 jruby-9.3.9.0
 jruby-9.3.10.0
+jruby-9.3.11.0
+jruby-9.3.13.0
 jruby-9.4.0.0
 jruby-9.4.1.0
 jruby-9.4.2.0
 jruby-9.4.3.0
+jruby-9.4.4.0
+jruby-9.4.5.0
 macruby-0.12
 maglev-1.0.0
 maglev-1.1beta
@@ -495,6 +499,9 @@ ruby-3.2.0
 ruby-3.2.1
 ruby-3.2.2
 ruby-3.3.0-preview1
+ruby-3.3.0-preview2
+ruby-3.3.0-preview3
+ruby-3.3.0
 truffleruby-1.0.0-rc2
 truffleruby-1.0.0-rc3
 truffleruby-1.0.0-rc5
@@ -535,3 +542,6 @@ truffleruby-22.3.0
 truffleruby-22.3.1
 truffleruby-23.0.0-preview1
 truffleruby-23.0.0
+truffleruby-23.1.0
+truffleruby-23.1.1
+truffleruby-23.1.2
