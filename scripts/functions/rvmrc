@@ -152,6 +152,7 @@ __rvm_rvmrc_tools_try_to_read_ruby()
       rvm_action="${rvm_action:-install}"
       rvm_remote_flag=0
       rvm_local_install=1
+      rvm_docs_flag=1
       major=$(cat ./include/ruby/version.h|grep " RUBY_API_VERSION_MAJOR " |sed "s/.*RUBY_API_VERSION_MAJOR //")
       minor=$(cat ./include/ruby/version.h|grep " RUBY_API_VERSION_MINOR " |sed "s/.*RUBY_API_VERSION_MINOR //")
       teeny=$(cat ./version.h|grep " RUBY_VERSION_TEENY " |sed "s/.*RUBY_VERSION_TEENY //")

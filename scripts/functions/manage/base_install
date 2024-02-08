@@ -61,7 +61,7 @@ __rvm_install_source()
   then
     rvm_source_dir=$rvm_local_src_path
   else
-    rvm_source_dir="${rvm_src_path}/$rvm_ruby_string/autogen.sh"
+    rvm_source_dir="${rvm_src_path}/$rvm_ruby_string"
   fi
 
   if

@@ -775,7 +775,7 @@ __rvm_parse_args()
             rvm_disable_binary_flag=1
             ;;
 
-          --with-*|--without-*|--enable-*|--disable-*|--docdir*)
+          --with-*|--without-*|--enable-*|--disable-*|--*dir=*)
             rvm_configure_flags+=( "$rvm_token" )
             rvm_disable_binary_flag=1
             ;;

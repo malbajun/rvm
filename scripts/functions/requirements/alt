@@ -1,6 +1,27 @@
 #!/usr/bin/env bash
 
-__rvm_sudo()
+requirements_find_alt()
+{
+  if # find macports in PATH
+    __rvm_which port >/dev/null 2>&1
+  then
+    return 0
+  else # find apt-get in and out of PATH and link to rvm/bin
+    \typeset __binary
+    for __binary in /usr/bin/apt-get /usr/local/bin/apt-get
+    do
+      if
+        [[ -f "${__binary}" && -s "${__binary}" && -x "${__binary}" ]]
+      then
+        PATH="$PATH:${__binary%/*}"
+        return 0
+      fi
+    done
+    return 1
+  fi
+}
+
+__rvm_try_sudo()
 {
   if
     [[ "$1" == "-p" ]]
@@ -8,7 +29,7 @@ __rvm_sudo()
     rvm_printf_to_stderr "${2//%p/[root]/}"
     shift 2
   fi
-  ssh root@localhost -t "$*" || sudo "$*" || su -c "$*" 2>/dev/null || true
+  ssh root@localhost -o PasswordAuthentication=false -o "RemoteCommand=$*" 2>/dev/null || sudo $* || su -c "$*" 2>/dev/null || true
 }
 
 requirements_alt_lib_installed() {
