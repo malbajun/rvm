@@ -1,3 +1,4 @@
 tar: @version@:.
 spec: .gear/rvm.spec
+diff: @version@:. . exclude=.gear/
 copy?: .gear/*.patch
