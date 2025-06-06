@@ -29,11 +29,17 @@ __rvm_try_sudo()
     rvm_printf_to_stderr "${2//%p/[root]/}"
     shift 2
   fi
-  ssh root@localhost -o PasswordAuthentication=false -o "RemoteCommand=$*" 2>/dev/null || sudo $* || su -c "$*" 2>/dev/null || true
+  ssh root@localhost -o PasswordAuthentication=false -o "RemoteCommand=$*" 2>/dev/null || sudo -n "$*" 2>/dev/null || true
 }
 
 requirements_alt_lib_installed() {
-  rpm -q "$1" >/dev/null 2>&1 || return $?
+  if
+    [[ -z "$(apt-cache depends "$1" 2>/dev/null)" ]]
+  then
+    return 1
+  else
+    return 0
+  fi
 }
 
 requirements_alt_lib_available()
@@ -62,16 +68,6 @@ requirements_alt_update_system()
   esac || return $?
 }
 
-requirements_alt_define_check_raspberry_pi()
-{
-  if
-    [[ "${_system_arch}" == "arm"* ]]
-  then
-    # assuming all arm will need this fix
-    requirements_check_fallback ntp openntpd chrony
-  fi
-}
-
 requirements_alt_define_openssl()
 {
   requirements_check openssl
@@ -79,8 +75,6 @@ requirements_alt_define_openssl()
 
 requirements_alt_define()
 {
-  requirements_alt_define_check_raspberry_pi
-
   case "$1" in
     (rvm)
       requirements_check bash curl patch
@@ -128,15 +122,15 @@ requirements_alt_define()
       requirements_alt_define_openssl "$1"
       ;;
     (ruby-2.3*|ruby-2.2*|ruby-2.1*|ruby-2.0*|ruby-1.9*)
-      requirements_check gcc patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison sqlite git
+      requirements_check gcc patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison sqlite3 git
       requirements_alt_define_openssl "$1"
       ;;
     (*-head)
-      requirements_check gcc patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison sqlite git
+      requirements_check gcc patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison sqlite3 git
       requirements_alt_define_openssl "$1"
       ;;
     (*)
-      requirements_check gcc patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison sqlite
+      requirements_check gcc patch curl zlib libreadline-devel autoconf automake diffutils make libtool bison sqlite3
       requirements_alt_define_openssl "$1"
       ;;
   esac
@@ -152,37 +146,4 @@ requirements_alt_service()
     rvm_error "There was a problem running 'systemctl $2 $3' with exit status '$__alt_status'."
     return $__alt_status
   fi
-}
-
-requirements_alt_after_check_raspberry_pi()
-{
-  if
-    [[ "${_system_arch}" == "arm"* ]]
-  then
-    ntp_servers=( ntpd systemd-timesyncd openntpd )
-    for ntp_server in "${ntp_servers[@]}"
-    do
-      if
-        systemctl list-unit-files | grep -Fq "$ntp_server.service" &&
-        systemctl is-active $ntp_server
-      then
-        return 0
-      fi
-    done
-    for ntp_server in "${ntp_servers[@]}"
-    do
-      if
-        systemctl list-unit-files | grep -Fq "$ntp_server.service"
-      then
-        requirements_alt_service is-enabled enable $ntp_server &&
-        requirements_alt_service is-active  start  $ntp_server ||
-        return $?
-      fi
-    done
-  fi
-}
-
-requirements_alt_after()
-{
-  requirements_alt_after_check_raspberry_pi
 }
