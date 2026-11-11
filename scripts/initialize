@@ -138,7 +138,7 @@ Error:
   export rvm_user_install_flag
 
   : \
-    rvm_bin_path:${rvm_bin_path:="$rvm_usr_path/bin"} \
+    rvm_bin_path:${rvm_bin_path:="$rvm_path/bin"} \
     rvm_man_path:${rvm_man_path:="$rvm_usr_path/share/man"} \
     rvm_archives_path:${rvm_archives_path:="$rvm_local_state_path/archives"} \
     rvm_docs_path:${rvm_docs_path:="$rvm_path/docs"} \

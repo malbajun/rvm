@@ -134,12 +134,19 @@ __rvm_fix_path_from_gem_path()
 __rvm_remove_rvm_from_path()
 {
   \typeset local_rvm_path
+  \typeset -a local_rvm_paths
   __rvm_remove_from_path "${rvm_path%/}/*"
   __rvm_remove_from_path "${rvm_gems_path%/}/*"
-  __rvm_remove_from_path "${rvm_bin_path}"  #TODO: this might be dangerous if rvm is available in some common path
 
-  while local_rvm_path="$( __rvm_which rvm 2>/dev/null )"
-  do __rvm_remove_from_path "${local_rvm_path%/*}"
+  # A packaged rvm executable can live in a shared directory such as /usr/bin.
+  # Only remove private RVM bin directories, identified by their scripts tree.
+  local_rvm_paths=()
+  __rvm_custom_separated_array local_rvm_paths : "$PATH"
+  for local_rvm_path in "${local_rvm_paths[@]}"
+  do
+    if [[ -x "$local_rvm_path/rvm" && -s "$local_rvm_path/../scripts/rvm" ]]
+    then __rvm_remove_from_path "$local_rvm_path"
+    fi
   done
   builtin hash -r
 }
