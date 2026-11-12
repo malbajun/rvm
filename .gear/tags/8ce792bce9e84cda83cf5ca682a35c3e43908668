@@ -1,0 +1,6 @@
+object 7c5b7eba9946f1d53689524432f4a9d436a03c99
+type commit
+tag 1.29.12.236.2
+tagger Dneslov Godovy <dneslov@gmail.com> 1794471735 +0000
+
+RVM 1.29.12p236.2: 236 upstream commits after 1.29.12 and 2 ALT source patches
