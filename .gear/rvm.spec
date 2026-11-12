@@ -2,7 +2,7 @@
 
 Name:          rvm
 Version:       1.29.12.236.2
-Release:       alt0.1
+Release:       alt0.2
 Summary:       Ruby enVironment Manager (RVM)
 License:       Apache-2.0
 Group:         Development/Ruby
@@ -143,6 +143,10 @@ ln -sf /proc/self/fd /dev/fd >/dev/null 2>&1 || exit 0
 
 
 %changelog
+* Thu Nov 12 2026 Pavel Skrylev <majioa@altlinux.org> 1.29.12.236.2-alt0.2
+- ! fix repeated shell initialization
++ ALT #61415
+
 * Thu Nov 12 2026 Pavel Skrylev <majioa@altlinux.org> 1.29.12.236.2-alt0.1
 - ^ 1.29.12p126 -> 1.29.12p236.2
 - * rebase ALT integration on current upstream

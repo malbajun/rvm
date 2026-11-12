@@ -21,7 +21,7 @@ if [ -n "$HOME" -a -d "$HOME" -a "$USER" != "root" ]; then
    set -- bin contrib docs examples gem-cache gemsets help hooks lib man patches patchsets scripts VERSION
    for i; do
       if [ -e "$rvm_system_path/$i" ] && { [ ! -e "$rvm_path/$i" ] || [ -L "$rvm_path/$i" ]; }; then
-         ln -rs "$rvm_system_path/$i" "$rvm_path/$i"
+         ln -rsfT "$rvm_system_path/$i" "$rvm_path/$i"
       fi
    done
 else
