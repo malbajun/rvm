@@ -203,6 +203,9 @@ rubygems_setup()
 
   (( rvm_ruby_selected_flag == 0 ))  || __rvm_select
 
+  if [[ -z "$version" ]]; then
+    version=${version_default:-ignore}
+  fi
   rubygems_select_version "$version" || return $?
   rvm_debug "rubygems_setup_rubygems version:${rvm_rubygems_version} rvm_gem_package_name:${rvm_gem_package_name} rvm_gem_url:${rvm_gem_url}"
   rvm_debug "rubygems_setup_bundler sha:${__bundler_sha} __bundler_package_name:${__bundler_package_name} __bundler_url:${__bundler_url}"

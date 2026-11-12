@@ -35,7 +35,9 @@ fi
 export rvm_path
 if [[ -z "${rvm_path:-}" ]]
 then
-  if [[ -d "${0%/bin/rvm}" ]]
+  if [[ -L "${0}" ]]
+  then rvm_pre="$(readlink -s "$0")"; rvm_path="$( \cd "${rvm_pre%/bin/rvm}">/dev/null; pwd )"
+  elif [[ -d "${0%/bin/rvm}" ]]
   then rvm_path="$( \cd "${0%/bin/rvm}">/dev/null; pwd )"
   elif (( UID == 0 )) && [[ -d "/usr/local/rvm" ]]
   then rvm_path="/usr/local/rvm"

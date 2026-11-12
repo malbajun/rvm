@@ -660,6 +660,14 @@ __rvm_parse_args()
             export "rvm_${rvm_token}_flag"=1
             ;;
 
+          --*-path=*)
+            rvm_token=${rvm_token#--}
+            rvm_token=${rvm_token//-/_}
+            rvm_value=${rvm_token//*=/}
+            rvm_token=${rvm_token//=*/}
+	    export rvm_${rvm_token}=$rvm_value
+            ;;
+
           --no-docs)
             rvm_token=${rvm_token#--no-}
             rvm_token=${rvm_token//-/_}
@@ -767,7 +775,7 @@ __rvm_parse_args()
             rvm_disable_binary_flag=1
             ;;
 
-          --with-*|--without-*|--enable-*|--disable-*)
+          --with-*|--without-*|--enable-*|--disable-*|--*dir=*)
             rvm_configure_flags+=( "$rvm_token" )
             rvm_disable_binary_flag=1
             ;;
