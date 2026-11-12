@@ -18,19 +18,29 @@ __rvm_install_source()
   rvm_log "Installing Ruby from source to: $rvm_ruby_home, this may take a while depending on your cpu(s)..."
   __rvm_cd "${rvm_src_path}"
 
-  __rvm_fetch_ruby ||
-  {
-    result=$?
-    rvm_error "There has been an error fetching the ruby interpreter. Halting the installation."
-    return $result
-  }
+  if [[ -z "$rvm_local_src_path" ]]
+  then
+    __rvm_fetch_ruby ||
+    {
+      result=$?
+      rvm_error "There has been an error fetching the ruby interpreter. Halting the installation."
+      return $result
+    }
 
-  __rvm_cd "${rvm_src_path}/$rvm_ruby_string" ||
-  {
-    result=$?
-    rvm_error "Source directory is missing.  \nDid the download or extraction fail?  \nHalting the installation."
-    return $result
-  }
+    __rvm_cd "${rvm_src_path}/$rvm_ruby_string" ||
+    {
+      result=$?
+      rvm_error "Source directory is missing.  \nDid the download or extraction fail?  \nHalting the installation."
+      return $result
+    }
+  else
+    __rvm_cd "${rvm_local_src_path}" ||
+    {
+      result=$?
+      rvm_error "Specified source directory is missing.  \nPlease specify a valid folder.  \nHalting the installation."
+      return $result
+    }
+  fi
 
   if
     [[ -d "${rvm_path}/usr" ]]
@@ -47,7 +57,15 @@ __rvm_install_source()
   }
 
   if
-    [[ -s "${rvm_src_path}/$rvm_ruby_string/autogen.sh" ]]
+    [[ -d "$rvm_local_src_path" ]]
+  then
+    rvm_source_dir=$rvm_local_src_path
+  else
+    rvm_source_dir="${rvm_src_path}/$rvm_ruby_string"
+  fi
+
+  if
+    [[ -s "$rvm_source_dir/autogen.sh" ]]
   then
     if [[ "${_system_name}" == "OpenBSD" ]]; then
       if [[ -z "$AUTOCONF_VERSION" ]]; then
@@ -57,7 +75,7 @@ __rvm_install_source()
         "AUTOCONF_VERSION=$AUTOCONF_VERSION" "sh" "autogen.sh" "-i"
       result=$?
     else
-      __rvm_log_command "autogen.sh" "$rvm_ruby_string - #autogen.sh" "${rvm_src_path}/$rvm_ruby_string/autogen.sh"
+      __rvm_log_command "autogen.sh" "$rvm_ruby_string - #autogen.sh" "$rvm_source_dir/autogen.sh"
       result=$?
     fi
 
@@ -175,7 +193,12 @@ __rvm_install_source()
       ;;
   esac
 
-  __rvm_initial_gemsets_create "$rvm_ruby_home/bin/ruby" &&
+  if [[ -z "$rvm_local_src_path" ]]
+  then
+    __rvm_initial_gemsets_create "$rvm_ruby_home/bin/ruby"
+  else
+    true
+  fi &&
   __rvm_post_install &&
   __rvm_fetch_ruby_cleanup ||
   return $?
@@ -431,9 +454,12 @@ https://rvm.io/rubies/named/
   then __rvm_remove_src_and_ruby
   fi
 
-  if __rvm_install_ruby_try_remote
-  then return 0
-  else (( $? == 2 )) || return 1 # 2 => continue with compilation
+  if [[ -z "$rvm_local_src_path" ]]
+  then
+    if __rvm_install_ruby_try_remote
+    then return 0
+    else (( $? == 2 )) || return 1 # 2 => continue with compilation
+    fi
   fi
 
   __rvm_check_available_space "${rvm_ruby_string}" sources || return $?

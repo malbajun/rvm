@@ -31,8 +31,9 @@ __rvm_detect_system()
       elif
         [[ -f /etc/altlinux-release ]]
       then
-        _system_name="Arch"
-        _system_version="libc-$(ldd --version  | \command \awk 'NR==1 {print $NF}' | \command \awk -F. '{print $1"."$2}' | head -n 1)"
+        _system_name="ALT"
+        _system_version="$(GREP_OPTIONS="" \command \grep -Eo '[0-9.]+' /etc/altlinux-release | head -n 1)"
+	_system_arch="$(uname -a|sed 's/ /\n/g' |tail -n-2 | head -1)"
       elif
         [[ -f /etc/SuSE-release ]]
       then

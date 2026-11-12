@@ -1,0 +1,3 @@
+tar: 1.29.12.236.2:.
+spec: .gear/rvm.spec
+copy: .gear/rvm.sh
